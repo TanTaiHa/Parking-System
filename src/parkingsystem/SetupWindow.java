@@ -8,7 +8,7 @@ import java.io.IOException;
 import net.sf.json.JSONObject;
 
 public class SetupWindow extends JFrame {
-    private JTextField dbNameField, dbUsernameField, dbPasswordField, adminUsernameField, adminPasswordField;
+    private JTextField dbNameField, adminUsernameField, adminPasswordField;
     private JLabel errorLabel;
 
     public SetupWindow() {
@@ -21,8 +21,6 @@ public class SetupWindow extends JFrame {
 
         // Initialize fields
         dbNameField = addField("Database Name:", "vehicle_parking", panel);
-        dbUsernameField = addField("Database Username:", "root", panel);
-        dbPasswordField = addField("Database Password:", "hiimtantaI010103", panel);
         adminUsernameField = addField("Admin Username:", "", panel);
         adminPasswordField = addField("Admin Password:", "", panel);
 
@@ -49,8 +47,7 @@ public class SetupWindow extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             // Check that all fields are filled
-            if (dbNameField.getText().isEmpty() || dbUsernameField.getText().isEmpty() || dbPasswordField.getText().isEmpty()
-                    || adminUsernameField.getText().isEmpty() || adminPasswordField.getText().isEmpty()) {
+            if (dbNameField.getText().isEmpty() || adminUsernameField.getText().isEmpty() || adminPasswordField.getText().isEmpty()) {
                 errorLabel.setText("Please fill in all fields.");
                 return;
             }
@@ -59,8 +56,6 @@ public class SetupWindow extends JFrame {
                 // Create configuration JSON
                 JSONObject config = new JSONObject();
                 config.put("database", dbNameField.getText());
-                config.put("username", dbUsernameField.getText());
-                config.put("password", dbPasswordField.getText());
 
                 // Write configuration to a file
                 try (FileWriter file = new FileWriter("config.json")) {
