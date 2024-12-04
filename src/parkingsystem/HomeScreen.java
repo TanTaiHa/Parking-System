@@ -1,15 +1,17 @@
 package parkingsystem;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class HomeScreen extends JFrame {
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private List<Vehicle> parkedVehicles = new ArrayList<>();
-    private List<Integer> occupiedSlots = new ArrayList<>(); // List of occupied slots
+    private List<Integer> occupiedSlots = new ArrayList<>();
     private JLabel[] slotLabels = new JLabel[36];
 
     public HomeScreen() {
@@ -59,7 +61,166 @@ public class HomeScreen extends JFrame {
         setVisible(true);
     }
 
+    private JPanel createAddVehiclePanel() {
+        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        JTextField nameField = new JTextField();
+        JTextField vehicleNumberField = new JTextField();
+        JTextField mobileField = new JTextField();
+        JComboBox<String> gateComboBox = new JComboBox<>(new String[]{"Gate 1", "Gate 2", "Gate 3"});
+        JButton saveButton = new JButton("SAVE VEHICLE");
+
+        panel.add(new JLabel("Name:"));
+        panel.add(nameField);
+        panel.add(new JLabel("Vehicle Number:"));
+        panel.add(vehicleNumberField);
+        panel.add(new JLabel("Mobile No:"));
+        panel.add(mobileField);
+        panel.add(new JLabel("Choose Gate:"));
+        panel.add(gateComboBox);
+        panel.add(new JLabel()); // Empty label for spacing
+        panel.add(saveButton);
+
+        saveButton.addActionListener(e -> {
+            try {
+                String name = nameField.getText().trim();
+                String vehicleNumber = vehicleNumberField.getText().trim();
+                String mobile = mobileField.getText().trim();
+                int gateIndex = gateComboBox.getSelectedIndex();
+
+                // Create vehicle with validation
+                Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex);
+
+                // Slot allocation logic
+                int[] gateToSlotMap = {2, 17, 14};
+                SlotAllocator allocator = new SlotAllocator(occupiedSlots);
+                
+                // Try to allocate slot with fallback mechanism
+                int slotIndex = tryAllocateSlotAcrossGates(gateIndex, gateToSlotMap, allocator);
+
+                if (slotIndex != -1) {
+                    // Assign slot to vehicle
+                    vehicle.assignSlot(slotIndex);
+                    parkedVehicles.add(vehicle);
+
+                    // Update slot visualization
+                    slotLabels[slotIndex].setBackground(Color.MAGENTA);
+                    slotLabels[slotIndex].setText("<html>Slot " + (slotIndex + 1) + "<br>" + vehicleNumber + "</html>");
+
+                    JOptionPane.showMessageDialog(this, 
+                        "Vehicle added successfully to Slot " + (slotIndex + 1) + "!", 
+                        "Success", JOptionPane.INFORMATION_MESSAGE);
+
+                    // Clear input fields
+                    nameField.setText("");
+                    vehicleNumberField.setText("");
+                    mobileField.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(this, 
+                        "No available slots in any gate.", 
+                        "Allocation Error", JOptionPane.WARNING_MESSAGE);
+                }
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(this, 
+                    ex.getMessage(), 
+                    "Validation Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
+        return panel;
+    }
+
+    private int tryAllocateSlotAcrossGates(int currentGateIndex, int[] gateToSlotMap, SlotAllocator allocator) {
+        // First, try the selected gate
+        int slotIndex = allocator.getNearestAvailableSlot(gateToSlotMap[currentGateIndex]);
+        
+        // If no slot in the selected gate, try other gates
+        if (slotIndex == -1) {
+            // Create a list of gate indices to try
+            List<Integer> gatePriorities = new ArrayList<>();
+            for (int i = 0; i < gateToSlotMap.length; i++) {
+                if (i != currentGateIndex) {
+                    gatePriorities.add(i);
+                }
+            }
+            
+            // Try other gates
+            for (int gateIndex : gatePriorities) {
+                slotIndex = allocator.getNearestAvailableSlot(gateToSlotMap[gateIndex]);
+                if (slotIndex != -1) {
+                    // Show notification about alternative gate
+                    JOptionPane.showMessageDialog(this, 
+                        "No slots in selected gate. Assigned to Gate " + (gateIndex + 1), 
+                        "Alternative Gate", JOptionPane.INFORMATION_MESSAGE);
+                    break;
+                }
+            }
+        }
+        
+        return slotIndex;
+    }
+
+    private JPanel createManageVehiclePanel() {
+        JPanel panel = new JPanel(new BorderLayout());
+        
+        // Search components
+        JPanel searchPanel = new JPanel(new FlowLayout());
+        JTextField searchField = new JTextField(20);
+        JButton searchButton = new JButton("Search Vehicle");
+        
+        // Table to display vehicle details
+        String[] columnNames = {"Name", "Vehicle Number", "Mobile", "Gate", "Slot", "Entry Time"};
+        DefaultTableModel model = new DefaultTableModel(columnNames, 0);
+        JTable vehicleTable = new JTable(model);
+        
+        searchPanel.add(new JLabel("Vehicle Number:"));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+        
+        JScrollPane tableScrollPane = new JScrollPane(vehicleTable);
+        
+        panel.add(searchPanel, BorderLayout.NORTH);
+        panel.add(tableScrollPane, BorderLayout.CENTER);
+        
+        // Vehicle tracking logic
+        searchButton.addActionListener(e -> {
+            String searchNumber = searchField.getText().trim();
+            
+            // Clear existing rows
+            model.setRowCount(0);
+            
+            // Find matching vehicles
+            List<Vehicle> matchedVehicles = parkedVehicles.stream()
+                .filter(v -> v.getVehicleNumber().toLowerCase().contains(searchNumber.toLowerCase()))
+                .collect(Collectors.toList());
+            
+            if (matchedVehicles.isEmpty()) {
+                JOptionPane.showMessageDialog(this, 
+                    "No vehicles found matching the search.", 
+                    "Search Result", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            
+            // Populate table with matching vehicles
+            for (Vehicle vehicle : matchedVehicles) {
+                model.addRow(new Object[]{
+                    vehicle.getName(), 
+                    vehicle.getVehicleNumber(), 
+                    vehicle.getMobile(), 
+                    "Gate " + (vehicle.getGateIndex() + 1),
+                    vehicle.getAssignedSlotIndex() != 0 ? "Slot " + (vehicle.getAssignedSlotIndex() + 1) : "Not Assigned",
+                    vehicle.getEntryTime().toString()
+                });
+            }
+        });
+        
+        return panel;
+    }
+
+    // Other methods remain the same as in previous implementation
     private JPanel createHomePanel() {
+        // Implementation as before
         JPanel panel = new JPanel(new GridBagLayout());
         panel.setBackground(Color.WHITE);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -113,81 +274,6 @@ public class HomeScreen extends JFrame {
         return gateLabel;
     }
 
-    private JPanel createAddVehiclePanel() {
-        JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JTextField nameField = new JTextField();
-        JTextField vehicleNumberField = new JTextField();
-        JTextField mobileField = new JTextField();
-        JComboBox<String> gateComboBox = new JComboBox<>(new String[]{"Gate 1", "Gate 2", "Gate 3"});
-        JButton saveButton = new JButton("SAVE VEHICLE");
-
-        panel.add(new JLabel("Name:"));
-        panel.add(nameField);
-        panel.add(new JLabel("Vehicle Number:"));
-        panel.add(vehicleNumberField);
-        panel.add(new JLabel("Mobile No:"));
-        panel.add(mobileField);
-        panel.add(new JLabel("Choose Gate:"));
-        panel.add(gateComboBox);
-        panel.add(new JLabel()); // Empty label for spacing
-        panel.add(saveButton);
-
-        saveButton.addActionListener(e -> {
-            String name = nameField.getText().trim();
-            String vehicleNumber = vehicleNumberField.getText().trim();
-            String mobile = mobileField.getText().trim();
-
-            // Validate input
-            if (name.isEmpty() || vehicleNumber.isEmpty() || mobile.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Please fill in all fields!", 
-                    "Validation Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            int gateIndex = gateComboBox.getSelectedIndex();
-            int[] gateToSlotMap = {2, 17, 14};  // Map dropdown index to gate indices
-
-            // Create SlotAllocator with current occupied slots
-            SlotAllocator allocator = new SlotAllocator(occupiedSlots);
-            
-            // Find nearest available slot
-            int slotIndex = allocator.getNearestAvailableSlot(gateToSlotMap[gateIndex]);
-
-            if (slotIndex != -1) {
-                // Create vehicle object
-                Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex);
-                parkedVehicles.add(vehicle);
-
-                // Update slot color and text
-                slotLabels[slotIndex].setBackground(Color.MAGENTA);
-                slotLabels[slotIndex].setText("<html>Slot " + (slotIndex + 1) + "<br>" + vehicleNumber + "</html>");
-
-                JOptionPane.showMessageDialog(this, 
-                    "Vehicle added successfully to Slot " + (slotIndex + 1) + "!", 
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-
-                // Clear input fields
-                nameField.setText("");
-                vehicleNumberField.setText("");
-                mobileField.setText("");
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "No available slots near the selected gate.", 
-                    "Allocation Error", JOptionPane.WARNING_MESSAGE);
-            }
-        });
-
-        return panel;
-    }
-
-    private JPanel createManageVehiclePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new JLabel("Manage Vehicle Panel (to be implemented)"), BorderLayout.CENTER);
-        return panel;
-    }
-
     private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         panel.add(new JLabel("History Panel (to be implemented)"), BorderLayout.CENTER);
@@ -197,7 +283,6 @@ public class HomeScreen extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             try {
-                // Optional: Set a system look and feel
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
                 e.printStackTrace();
