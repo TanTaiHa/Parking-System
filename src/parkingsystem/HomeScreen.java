@@ -159,7 +159,7 @@ public class HomeScreen extends JFrame {
                 // Create vehicle object
                 Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex);
                 parkedVehicles.add(vehicle);
-
+//
                 // Update slot color and text
                 slotLabels[slotIndex].setBackground(Color.MAGENTA);
                 slotLabels[slotIndex].setText("<html>Slot " + (slotIndex + 1) + "<br>" + vehicleNumber + "</html>");
