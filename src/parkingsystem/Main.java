@@ -11,7 +11,7 @@ public class Main {
             if (configFile.exists()) {
                 configFile.delete();
             }
-
+            
             JFrame splashScreen = new JFrame();
             splashScreen.setUndecorated(true);
             splashScreen.setSize(500, 300);

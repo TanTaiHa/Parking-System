@@ -1,20 +1,66 @@
 package parkingsystem;
 
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 public class Vehicle {
+     // Static set to track unique vehicle numbers
+    private static Set<String> registeredVehicleNumbers = new HashSet<>();
     private String name;
     private String vehicleNumber;
     private String mobile;
     private int gateIndex;
+    private int assignedSlotIndex = -1;  // Default to -1 to indicate no slot assigned
+    private LocalDateTime entryTime;
 
-    // Constructor to initialize the Vehicle object
     public Vehicle(String name, String vehicleNumber, String mobile, int gateIndex) {
-        this.name = name;
-        this.vehicleNumber = vehicleNumber;
-        this.mobile = mobile;
+        // Validate name
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Name must be fill in");
+        }
+
+        // Validate vehicle number - check for uniqueness
+        if (vehicleNumber == null || vehicleNumber.trim().isEmpty()) {
+            throw new IllegalArgumentException("Vehicle number must be fill in");
+        }
+        
+        // Check if vehicle number is already registered
+        String formattedVehicleNumber = vehicleNumber.trim().toUpperCase();
+        if (registeredVehicleNumbers.contains(formattedVehicleNumber)) {
+            throw new IllegalArgumentException("The vehicle number has already been assigned!");
+        }
+
+        // Mobile number validation
+        if (mobile == null || mobile.trim().isEmpty() || !mobile.matches("\\d+")) {
+            throw new IllegalArgumentException("Phone number must contain only digits");
+        }
+
+        // Assign values
+        this.name = name.trim();
+        this.vehicleNumber = formattedVehicleNumber;
+        this.mobile = mobile != null ? mobile.trim() : "";
         this.gateIndex = gateIndex;
+        this.entryTime = LocalDateTime.now();
+
+        // Add vehicle number to registered set
+        registeredVehicleNumbers.add(formattedVehicleNumber);
     }
 
-    // Getters and setters
+    // remove vehicle number when it gone my bae (optional)
+    public void removeVehicleNumber() {
+        registeredVehicleNumbers.remove(this.vehicleNumber);
+    }
+
+    // Method to assign a slot
+    public void assignSlot(int slotIndex) {
+        if (slotIndex < 0) {
+            throw new IllegalArgumentException("Slot index cannot be negative");
+        }
+        this.assignedSlotIndex = slotIndex;
+    }
+
+    // Existing getters and setters
     public String getName() {
         return name;
     }
@@ -47,6 +93,16 @@ public class Vehicle {
         this.gateIndex = gateIndex;
     }
 
+    // New getter for assigned slot index
+    public int getAssignedSlotIndex() {
+        return assignedSlotIndex;
+    }
+
+    // Getter for entry time
+    public LocalDateTime getEntryTime() {
+        return entryTime;
+    }
+
     @Override
     public String toString() {
         return "Vehicle{" +
@@ -54,6 +110,8 @@ public class Vehicle {
                 ", vehicleNumber='" + vehicleNumber + '\'' +
                 ", mobile='" + mobile + '\'' +
                 ", gateIndex=" + gateIndex +
+                ", assignedSlotIndex=" + assignedSlotIndex +
+                ", entryTime=" + entryTime +
                 '}';
     }
 }
