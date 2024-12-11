@@ -3,6 +3,7 @@ package parkingsystem;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -11,8 +12,8 @@ public class HomeScreen extends JFrame {
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private List<Vehicle> parkedVehicles = new ArrayList<>();
-    private List<Integer> occupiedSlots = new ArrayList<>();
     private JLabel[] slotLabels = new JLabel[36];
+    SlotAllocator allocator = null;
 
     public HomeScreen() {
         setTitle("Parking Management System");
@@ -68,7 +69,7 @@ public class HomeScreen extends JFrame {
         JTextField nameField = new JTextField();
         JTextField vehicleNumberField = new JTextField();
         JTextField mobileField = new JTextField();
-        JComboBox<String> gateComboBox = new JComboBox<>(new String[]{"Gate 1", "Gate 2", "Gate 3"});
+        JComboBox<String> gateComboBox = new JComboBox<>(new String[] { "Gate 1", "Gate 2", "Gate 3" });
         JButton saveButton = new JButton("SAVE VEHICLE");
 
         panel.add(new JLabel("Name:"));
@@ -93,9 +94,18 @@ public class HomeScreen extends JFrame {
                 Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex);
 
                 // Slot allocation logic
-                int[] gateToSlotMap = {2, 17, 14};
-                SlotAllocator allocator = new SlotAllocator(occupiedSlots);
-                
+                int[] gateToSlotMap = { 2, 17, 14 };
+
+                while (allocator == null) { // Vòng lặp sẽ tiếp tục cho đến khi SlotAllocator được tạo thành công
+                    try {
+                        allocator = new SlotAllocator("src/parkingsystem/slot.txt"); // Cố gắng tạo SlotAllocator
+                        System.out.println("File loaded successfully!");
+                    } catch (IOException ioException) {
+                        System.out.println("Error reading file: " + ioException.getMessage());
+                        System.out.println("Please try again.");
+                    }
+                }
+
                 // Try to allocate slot with fallback mechanism
                 int slotIndex = tryAllocateSlotAcrossGates(gateIndex, gateToSlotMap, allocator);
 
@@ -108,23 +118,23 @@ public class HomeScreen extends JFrame {
                     slotLabels[slotIndex].setBackground(Color.MAGENTA);
                     slotLabels[slotIndex].setText("<html>Slot " + (slotIndex + 1) + "<br>" + vehicleNumber + "</html>");
 
-                    JOptionPane.showMessageDialog(this, 
-                        "Vehicle added successfully to Slot " + (slotIndex + 1) + "!", 
-                        "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this,
+                            "Vehicle added successfully to Slot " + (slotIndex + 1) + "!",
+                            "Success", JOptionPane.INFORMATION_MESSAGE);
 
                     // Clear input fields
                     nameField.setText("");
                     vehicleNumberField.setText("");
                     mobileField.setText("");
                 } else {
-                    JOptionPane.showMessageDialog(this, 
-                        "No available slots in any gate.", 
-                        "Allocation Error", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(this,
+                            "No available slots in any gate.",
+                            "Allocation Error", JOptionPane.WARNING_MESSAGE);
                 }
             } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(this, 
-                    ex.getMessage(), 
-                    "Validation Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        ex.getMessage(),
+                        "Validation Error", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -134,7 +144,7 @@ public class HomeScreen extends JFrame {
     private int tryAllocateSlotAcrossGates(int currentGateIndex, int[] gateToSlotMap, SlotAllocator allocator) {
         // First, try the selected gate
         int slotIndex = allocator.getNearestAvailableSlot(gateToSlotMap[currentGateIndex]);
-        
+
         // If no slot in the selected gate, try other gates
         if (slotIndex == -1) {
             // Create a list of gate indices to try
@@ -144,77 +154,78 @@ public class HomeScreen extends JFrame {
                     gatePriorities.add(i);
                 }
             }
-            
+
             // Try other gates
             for (int gateIndex : gatePriorities) {
                 slotIndex = allocator.getNearestAvailableSlot(gateToSlotMap[gateIndex]);
                 if (slotIndex != -1) {
                     // Show notification about alternative gate
-                    JOptionPane.showMessageDialog(this, 
-                        "No slots in selected gate. Assigned to Gate " + (gateIndex + 1), 
-                        "Alternative Gate", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this,
+                            "No slots in selected gate. Assigned to Gate " + (gateIndex + 1),
+                            "Alternative Gate", JOptionPane.INFORMATION_MESSAGE);
                     break;
                 }
             }
         }
-        
+
         return slotIndex;
     }
 
     private JPanel createManageVehiclePanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        
+
         // Search components
         JPanel searchPanel = new JPanel(new FlowLayout());
         JTextField searchField = new JTextField(20);
         JButton searchButton = new JButton("Search Vehicle");
-        
+
         // Table to display vehicle details
-        String[] columnNames = {"Name", "Vehicle Number", "Mobile", "Gate", "Slot", "Entry Time"};
+        String[] columnNames = { "Name", "Vehicle Number", "Mobile", "Gate", "Slot", "Entry Time" };
         DefaultTableModel model = new DefaultTableModel(columnNames, 0);
         JTable vehicleTable = new JTable(model);
-        
+
         searchPanel.add(new JLabel("Vehicle Number:"));
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
-        
+
         JScrollPane tableScrollPane = new JScrollPane(vehicleTable);
-        
+
         panel.add(searchPanel, BorderLayout.NORTH);
         panel.add(tableScrollPane, BorderLayout.CENTER);
-        
+
         // Vehicle tracking logic
         searchButton.addActionListener(e -> {
             String searchNumber = searchField.getText().trim();
-            
+
             // Clear existing rows
             model.setRowCount(0);
-            
+
             // Find matching vehicles
             List<Vehicle> matchedVehicles = parkedVehicles.stream()
-                .filter(v -> v.getVehicleNumber().toLowerCase().contains(searchNumber.toLowerCase()))
-                .collect(Collectors.toList());
-            
+                    .filter(v -> v.getVehicleNumber().toLowerCase().contains(searchNumber.toLowerCase()))
+                    .collect(Collectors.toList());
+
             if (matchedVehicles.isEmpty()) {
-                JOptionPane.showMessageDialog(this, 
-                    "No vehicles found matching the search.", 
-                    "Search Result", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "No vehicles found matching the search.",
+                        "Search Result", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            
+
             // Populate table with matching vehicles
             for (Vehicle vehicle : matchedVehicles) {
-                model.addRow(new Object[]{
-                    vehicle.getName(), 
-                    vehicle.getVehicleNumber(), 
-                    vehicle.getMobile(), 
-                    "Gate " + (vehicle.getGateIndex() + 1),
-                    vehicle.getAssignedSlotIndex() != 0 ? "Slot " + (vehicle.getAssignedSlotIndex() + 1) : "Not Assigned",
-                    vehicle.getEntryTime().toString()
+                model.addRow(new Object[] {
+                        vehicle.getName(),
+                        vehicle.getVehicleNumber(),
+                        vehicle.getMobile(),
+                        "Gate " + (vehicle.getGateIndex() + 1),
+                        vehicle.getAssignedSlotIndex() != 0 ? "Slot " + (vehicle.getAssignedSlotIndex() + 1)
+                                : "Not Assigned",
+                        vehicle.getEntryTime().toString()
                 });
             }
         });
-        
+
         return panel;
     }
 

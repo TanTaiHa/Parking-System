@@ -1,40 +1,122 @@
 package parkingsystem;
 
-import java.util.List;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.*;
 
 public class SlotAllocator {
-    private final List<Integer> occupiedSlots;
+    private List<Slot> slotsByGate1;
+    private List<Slot> slotsByGate2;
+    private List<Slot> slotsByGate3;
+    private HashMap<Integer, Slot> slotMap;
 
-    public SlotAllocator(List<Integer> occupiedSlots) {
-        this.occupiedSlots = occupiedSlots;
+    // Constructor
+    public SlotAllocator(String fileName) throws IOException {
+        slotsByGate1 = new ArrayList<>();
+        slotsByGate2 = new ArrayList<>();
+        slotsByGate3 = new ArrayList<>();
+        slotMap = new HashMap<>();
+
+        loadSlotsFromFile(fileName);
+        sortSlots();
     }
 
     public int getNearestAvailableSlot(int gateIndex) {
-        int[] slotPriorities;
-        
-        switch(gateIndex) {
-            case 2:  // Gate 1 (Top center)
-                // Slots closest to top center gate
-                slotPriorities = new int[] {2, 3, 1, 8, 9, 7, 14, 15};
+        List<Slot> slotsByGate;
+
+        // // Lựa chọn danh sách dựa trên chỉ số cổng
+        // System.out.println("Slots for gate after sort 1:" + gateIndex);
+        // for (Slot slot : slotsByGate1) {
+        // System.out.println(slot);
+        // }
+        switch (gateIndex) {
+            case 1:
+                slotsByGate = getSlotsByGate1();
                 break;
-            case 17:  // Gate 2 (Middle right)
-                slotPriorities = new int[] {17, 11, 23, 16, 18, 10, 12, 24};
+            case 2:
+                slotsByGate = getSlotsByGate2();
                 break;
-            case 14:  // Gate 3 (Middle left)
-                slotPriorities = new int[] {14, 8, 20, 13, 15, 7, 21, 19};
+            case 3:
+                slotsByGate = getSlotsByGate3();
                 break;
             default:
-                return -1;
+                throw new IllegalArgumentException("Invalid gate index. Must be 1, 2, or 3.");
         }
-        
-        // Find the first available slot in the priority list
-        for (int slot : slotPriorities) {
-            if (!occupiedSlots.contains(slot)) {
-                occupiedSlots.add(slot);  // Mark slot as occupied
-                return slot;  // Return 0-based index
+
+        // System.out.println("Slots for gate after sort copy:");
+        // for (Slot slot : slotsByGate) {
+        // System.out.println(slot);
+        // }
+
+        // Duyệt qua danh sách và tìm slot khả dụng
+        for (Slot slot : slotsByGate) {
+            if (slot.isAvailable()) {
+                slot.setAvailable(false); // Gán trạng thái thành không khả dụng
+                return slot.getId(); // Trả về ID của slot
             }
         }
-        
-        return -1; // No available slots
+
+        // Không tìm thấy slot khả dụng
+        return -1;
+    }
+
+    public boolean returnSlot(int id) {
+        Slot slot = slotMap.get(id);
+        if (slot != null) {
+            slot.setAvailable(true); // Đặt lại trạng thái thành khả dụng
+            return true;
+        }
+
+        return false; // Không tìm thấy slot với id tương ứng
+    }
+
+    // Đọc thông tin từ file
+    private void loadSlotsFromFile(String fileName) throws IOException {
+        try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(","); // Giả sử mỗi dòng có dạng:
+                                                  // id,available,distanceToGate1,distanceToGate2,distanceToGate3
+                int id = Integer.parseInt(parts[0].trim());
+                boolean available = Boolean.parseBoolean(parts[1].trim());
+                int distanceToGate1 = Integer.parseInt(parts[2].trim());
+                int distanceToGate2 = Integer.parseInt(parts[3].trim());
+                int distanceToGate3 = Integer.parseInt(parts[4].trim());
+
+                // Chỉ thêm Slot nếu id chưa tồn tại
+                if (!slotMap.containsKey(id)) {
+                    Slot slot = new Slot(id, available, distanceToGate1, distanceToGate2, distanceToGate3);
+                    slotsByGate1.add(slot);
+                    slotsByGate2.add(slot);
+                    slotsByGate3.add(slot);
+                    slotMap.put(id, slot);
+                }
+            }
+        }
+    }
+
+    // Sắp xếp các mảng tăng dần theo khoảng cách
+    private void sortSlots() {
+        slotsByGate1.sort(Comparator.comparingInt(Slot::getDistanceToGate1));
+        slotsByGate2.sort(Comparator.comparingInt(Slot::getDistanceToGate2));
+        slotsByGate3.sort(Comparator.comparingInt(Slot::getDistanceToGate3));
+    }
+
+    // Lấy danh sách slot theo cổng
+    public List<Slot> getSlotsByGate1() {
+        return slotsByGate1;
+    }
+
+    public List<Slot> getSlotsByGate2() {
+        return slotsByGate2;
+    }
+
+    public List<Slot> getSlotsByGate3() {
+        return slotsByGate3;
+    }
+
+    public HashMap<Integer, Slot> getSlotMap() {
+        return slotMap;
     }
 }
