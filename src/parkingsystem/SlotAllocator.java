@@ -87,10 +87,10 @@ public class SlotAllocator {
                 // Chỉ thêm Slot nếu id chưa tồn tại
                 if (!slotMap.containsKey(id)) {
                     Slot slot = new Slot(id, available, distanceToGate1, distanceToGate2, distanceToGate3);
-                    slotsByGate1.add(slot);
-                    slotsByGate2.add(slot);
-                    slotsByGate3.add(slot);
-                    slotMap.put(id, slot);
+                    getSlotsByGate1().add(slot);
+                    getSlotsByGate2().add(slot);
+                    getSlotsByGate3().add(slot);
+                    getSlotMap().put(id, slot);
                 }
             }
         }
@@ -98,9 +98,9 @@ public class SlotAllocator {
 
     // Sắp xếp các mảng tăng dần theo khoảng cách
     private void sortSlots() {
-        slotsByGate1.sort(Comparator.comparingInt(Slot::getDistanceToGate1));
-        slotsByGate2.sort(Comparator.comparingInt(Slot::getDistanceToGate2));
-        slotsByGate3.sort(Comparator.comparingInt(Slot::getDistanceToGate3));
+        getSlotsByGate1().sort(Comparator.comparingInt(Slot::getDistanceToGate1));
+        getSlotsByGate2().sort(Comparator.comparingInt(Slot::getDistanceToGate2));
+        getSlotsByGate3().sort(Comparator.comparingInt(Slot::getDistanceToGate3));
     }
 
     // Lấy danh sách slot theo cổng
