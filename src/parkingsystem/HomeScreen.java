@@ -88,17 +88,17 @@ public class HomeScreen extends JFrame {
                 String name = nameField.getText().trim();
                 String vehicleNumber = vehicleNumberField.getText().trim();
                 String mobile = mobileField.getText().trim();
-                int gateIndex = gateComboBox.getSelectedIndex();
+                int gateIndex = gateComboBox.getSelectedIndex() + 1; // Changed to 1-based indexing
 
                 // Create vehicle with validation
-                Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex);
+                Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex - 1);
 
                 // Slot allocation logic
                 int[] gateToSlotMap = { 2, 17, 14 };
 
-                while (allocator == null) { // Vòng lặp sẽ tiếp tục cho đến khi SlotAllocator được tạo thành công
+                while (allocator == null) {
                     try {
-                        allocator = new SlotAllocator("src/parkingsystem/slot.txt"); // Cố gắng tạo SlotAllocator
+                        allocator = new SlotAllocator("src/parkingsystem/slot.txt");
                         System.out.println("File loaded successfully!");
                     } catch (IOException ioException) {
                         System.out.println("Error reading file: " + ioException.getMessage());
@@ -143,13 +143,13 @@ public class HomeScreen extends JFrame {
 
     private int tryAllocateSlotAcrossGates(int currentGateIndex, int[] gateToSlotMap, SlotAllocator allocator) {
         // First, try the selected gate
-        int slotIndex = allocator.getNearestAvailableSlot(gateToSlotMap[currentGateIndex]);
+        int slotIndex = allocator.getNearestAvailableSlot(currentGateIndex);
 
         // If no slot in the selected gate, try other gates
         if (slotIndex == -1) {
             // Create a list of gate indices to try
             List<Integer> gatePriorities = new ArrayList<>();
-            for (int i = 0; i < gateToSlotMap.length; i++) {
+            for (int i = 1; i <= 3; i++) {
                 if (i != currentGateIndex) {
                     gatePriorities.add(i);
                 }
@@ -157,11 +157,11 @@ public class HomeScreen extends JFrame {
 
             // Try other gates
             for (int gateIndex : gatePriorities) {
-                slotIndex = allocator.getNearestAvailableSlot(gateToSlotMap[gateIndex]);
+                slotIndex = allocator.getNearestAvailableSlot(gateIndex);
                 if (slotIndex != -1) {
                     // Show notification about alternative gate
                     JOptionPane.showMessageDialog(this,
-                            "No slots in selected gate. Assigned to Gate " + (gateIndex + 1),
+                            "No slots in selected gate. Assigned to Gate " + gateIndex,
                             "Alternative Gate", JOptionPane.INFORMATION_MESSAGE);
                     break;
                 }
@@ -277,12 +277,12 @@ public class HomeScreen extends JFrame {
     }
 
     private JLabel createGateLabel(String text, Color color) {
-        JLabel gateLabel = new JLabel(text, SwingConstants.CENTER);
-        gateLabel.setOpaque(true);
-        gateLabel.setBackground(color);
-        gateLabel.setPreferredSize(new Dimension(100, 50));
-        gateLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-        return gateLabel;
+    JLabel gateLabel = new JLabel(text, SwingConstants.CENTER);
+    gateLabel.setOpaque(true);
+    gateLabel.setBackground(color);
+    gateLabel.setPreferredSize(new Dimension(60, 60)); // Changed from (100, 50) to (60, 60)
+    gateLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+    return gateLabel;
     }
 
     private JPanel createHistoryPanel() {
