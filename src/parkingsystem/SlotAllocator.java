@@ -1,4 +1,5 @@
 package parkingsystem;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -16,12 +17,14 @@ public class SlotAllocator {
         slotsByGate2 = new ArrayList<>();
         slotsByGate3 = new ArrayList<>();
         slotMap = new HashMap<>();
+
         loadSlotsFromFile(fileName);
         sortSlots();
     }
 
     public int getNearestAvailableSlot(int gateIndex) {
         List<Slot> slotsByGate;
+
         switch (gateIndex) {
             case 1:
                 slotsByGate = getSlotsByGate1();
@@ -35,42 +38,43 @@ public class SlotAllocator {
             default:
                 throw new IllegalArgumentException("Invalid gate index. Must be 1, 2, or 3.");
         }
-        
+
         // Find available slot
         for (Slot slot : slotsByGate) {
             if (slot.isAvailable()) {
                 slot.setAvailable(false); // Mark as unavailable
-                return slot.getId() + 1; // Return slot ID in base-1
+                return slot.getId(); // Return slot ID
             }
         }
-        
+
         // No available slot found
         return -1;
     }
 
     public boolean returnSlot(int id) {
-        // Adjust input to base-0
-        Slot slot = slotMap.get(id - 1);
+        Slot slot = slotMap.get(id);
         if (slot != null) {
-            slot.setAvailable(true);
+            slot.setAvailable(true); // Đặt lại trạng thái thành khả dụng
             return true;
         }
-        return false;
+
+        return false; // Không tìm thấy slot với id tương ứng
     }
 
-    // Read information from file
+    // Đọc thông tin từ file
     private void loadSlotsFromFile(String fileName) throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
+                String[] parts = line.split(","); // Giả sử mỗi dòng có dạng:
+                                                  // id,available,distanceToGate1,distanceToGate2,distanceToGate3
                 int id = Integer.parseInt(parts[0].trim());
                 boolean available = Boolean.parseBoolean(parts[1].trim());
                 int distanceToGate1 = Integer.parseInt(parts[2].trim());
                 int distanceToGate2 = Integer.parseInt(parts[3].trim());
                 int distanceToGate3 = Integer.parseInt(parts[4].trim());
-                
-                // Only add Slot if id doesn't exist
+
+                // Chỉ thêm Slot nếu id chưa tồn tại
                 if (!slotMap.containsKey(id)) {
                     Slot slot = new Slot(id, available, distanceToGate1, distanceToGate2, distanceToGate3);
                     slotsByGate1.add(slot);
@@ -82,14 +86,14 @@ public class SlotAllocator {
         }
     }
 
-    // Sort arrays in ascending order by distance
+    // Sắp xếp các mảng tăng dần theo khoảng cách
     private void sortSlots() {
         slotsByGate1.sort(Comparator.comparingInt(Slot::getDistanceToGate1));
         slotsByGate2.sort(Comparator.comparingInt(Slot::getDistanceToGate2));
         slotsByGate3.sort(Comparator.comparingInt(Slot::getDistanceToGate3));
     }
 
-    // Getter methods remain the same
+    // Lấy danh sách slot theo cổng
     public List<Slot> getSlotsByGate1() {
         return slotsByGate1;
     }
