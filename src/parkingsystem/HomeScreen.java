@@ -60,6 +60,14 @@ public class HomeScreen extends JFrame {
         add(cardPanel, BorderLayout.CENTER);
 
         setVisible(true);
+
+        try {
+            allocator = new SlotAllocator("src/parkingsystem/slot.txt");
+            System.out.println("File loaded successfully!");
+        } catch (IOException ioException) {
+            System.out.println("Error reading file: " + ioException.getMessage());
+            System.out.println("Please try again.");
+        }
     }
 
     private JPanel createAddVehiclePanel() {
@@ -91,23 +99,10 @@ public class HomeScreen extends JFrame {
                 int gateIndex = gateComboBox.getSelectedIndex() + 1; // Changed to 1-based indexing
 
                 // Create vehicle with validation
-                Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex - 1);
-
-                // Slot allocation logic
-                int[] gateToSlotMap = { 2, 17, 14 };
-
-                while (allocator == null) {
-                    try {
-                        allocator = new SlotAllocator("src/parkingsystem/slot.txt");
-                        System.out.println("File loaded successfully!");
-                    } catch (IOException ioException) {
-                        System.out.println("Error reading file: " + ioException.getMessage());
-                        System.out.println("Please try again.");
-                    }
-                }
+                Vehicle vehicle = new Vehicle(name, vehicleNumber, mobile, gateIndex);
 
                 // Try to allocate slot with fallback mechanism
-                int slotIndex = tryAllocateSlotAcrossGates(gateIndex, gateToSlotMap, allocator);
+                int slotIndex = allocator.getNearestAvailableSlot(gateIndex);
 
                 if (slotIndex != -1) {
                     // Assign slot to vehicle
@@ -115,11 +110,11 @@ public class HomeScreen extends JFrame {
                     parkedVehicles.add(vehicle);
 
                     // Update slot visualization
-                    slotLabels[slotIndex].setBackground(Color.MAGENTA);
-                    slotLabels[slotIndex].setText("<html>Slot " + (slotIndex + 1) + "<br>" + vehicleNumber + "</html>");
+                    slotLabels[slotIndex - 1].setBackground(Color.MAGENTA);
+                    slotLabels[slotIndex - 1].setText("<html>Slot " + slotIndex + "<br>" + vehicleNumber + "</html>");
 
                     JOptionPane.showMessageDialog(this,
-                            "Vehicle added successfully to Slot " + (slotIndex + 1) + "!",
+                            "Vehicle added successfully to Slot " + slotIndex + "!",
                             "Success", JOptionPane.INFORMATION_MESSAGE);
 
                     // Clear input fields
@@ -139,36 +134,6 @@ public class HomeScreen extends JFrame {
         });
 
         return panel;
-    }
-
-    private int tryAllocateSlotAcrossGates(int currentGateIndex, int[] gateToSlotMap, SlotAllocator allocator) {
-        // First, try the selected gate
-        int slotIndex = allocator.getNearestAvailableSlot(currentGateIndex);
-
-        // If no slot in the selected gate, try other gates
-        if (slotIndex == -1) {
-            // Create a list of gate indices to try
-            List<Integer> gatePriorities = new ArrayList<>();
-            for (int i = 1; i <= 3; i++) {
-                if (i != currentGateIndex) {
-                    gatePriorities.add(i);
-                }
-            }
-
-            // Try other gates
-            for (int gateIndex : gatePriorities) {
-                slotIndex = allocator.getNearestAvailableSlot(gateIndex);
-                if (slotIndex != -1) {
-                    // Show notification about alternative gate
-                    JOptionPane.showMessageDialog(this,
-                            "No slots in selected gate. Assigned to Gate " + gateIndex,
-                            "Alternative Gate", JOptionPane.INFORMATION_MESSAGE);
-                    break;
-                }
-            }
-        }
-
-        return slotIndex;
     }
 
     private JPanel createManageVehiclePanel() {
@@ -277,12 +242,12 @@ public class HomeScreen extends JFrame {
     }
 
     private JLabel createGateLabel(String text, Color color) {
-    JLabel gateLabel = new JLabel(text, SwingConstants.CENTER);
-    gateLabel.setOpaque(true);
-    gateLabel.setBackground(color);
-    gateLabel.setPreferredSize(new Dimension(60, 60)); // Changed from (100, 50) to (60, 60)
-    gateLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
-    return gateLabel;
+        JLabel gateLabel = new JLabel(text, SwingConstants.CENTER);
+        gateLabel.setOpaque(true);
+        gateLabel.setBackground(color);
+        gateLabel.setPreferredSize(new Dimension(60, 60)); // Changed from (100, 50) to (60, 60)
+        gateLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK));
+        return gateLabel;
     }
 
     private JPanel createHistoryPanel() {
