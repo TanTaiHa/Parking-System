@@ -64,7 +64,7 @@ public class StatisticsPanel extends JPanel {
                 // Create Pie Chart
                 DefaultPieDataset dataset = new DefaultPieDataset();
                 for (Map.Entry<Integer, Long> entry : gateStats.entrySet()) {
-                    dataset.setValue("Gate " + (entry.getKey() + 1), entry.getValue());
+                    dataset.setValue("Gate " + (entry.getKey()), entry.getValue());
                 }
 
                 JFreeChart chart = ChartFactory.createPieChart(
