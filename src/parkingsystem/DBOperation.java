@@ -8,7 +8,7 @@ import java.sql.Statement;
 public class DBOperation {
     private static final String URL = "jdbc:mysql://localhost:3306/vehicle_parking";
     private static final String USER = "root";
-    private static final String PASSWORD = "huynhhuunghia";
+    private static final String PASSWORD = "baby0148";
 
     private Connection connect() throws Exception {
         return DriverManager.getConnection(URL, USER, PASSWORD);

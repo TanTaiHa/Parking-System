@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="ParkingSystem">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/dist/ParkingSystem.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
