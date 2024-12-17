@@ -3,6 +3,7 @@ package parkingsystem;
 public class Slot {
      private int id;
      private boolean available;
+     private long beginTime;
      private int distanceToGate1;
      private int distanceToGate2;
      private int distanceToGate3;
@@ -13,6 +14,14 @@ public class Slot {
           this.distanceToGate1 = distanceToGate1;
           this.distanceToGate2 = distanceToGate2;
           this.distanceToGate3 = distanceToGate3;
+     }
+
+     public void setTime() {
+          this.beginTime = System.currentTimeMillis();
+     }
+
+     public long getTime() {
+          return (System.currentTimeMillis() - beginTime) / 1000;
      }
 
      public int getId() {

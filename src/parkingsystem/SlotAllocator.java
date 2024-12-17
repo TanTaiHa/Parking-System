@@ -22,6 +22,16 @@ public class SlotAllocator {
         sortSlots();
     }
 
+    public void UpdateSlotValue(String fileName) throws IOException {
+        slotsByGate1.clear();
+        slotsByGate2.clear();
+        slotsByGate3.clear();
+        slotMap.clear();
+
+        loadSlotsFromFile(fileName);
+        sortSlots();
+    }
+
     public int getNearestAvailableSlot(int gateIndex) {
         List<Slot> slotsByGate;
 
@@ -43,6 +53,7 @@ public class SlotAllocator {
         for (Slot slot : slotsByGate) {
             if (slot.isAvailable()) {
                 slot.setAvailable(false); // Mark as unavailable
+                slot.setTime(); // Set begin time
                 return slot.getId(); // Return slot ID
             }
         }
@@ -51,18 +62,25 @@ public class SlotAllocator {
         return -1;
     }
 
-    public boolean returnSlot(int id) {
+    public long returnSlot(int id) {
         Slot slot = slotMap.get(id);
         if (slot != null) {
-            slot.setAvailable(true); // Đặt lại trạng thái thành khả dụng
-            return true;
+            slot.setAvailable(true);
+
+            if (!slot.isAvailable()) {
+                return slot.getTime();
+            } else {
+                System.out.println("Slot " + id + " is already available.");
+                return -1;
+            }
         }
 
-        return false; // Không tìm thấy slot với id tương ứng
+        System.out.println("Slot " + id + " not found.");
+        return -1;
     }
 
     // Đọc thông tin từ file
-    private void loadSlotsFromFile(String fileName) throws IOException {
+    private boolean loadSlotsFromFile(String fileName) throws IOException {
         try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -83,7 +101,14 @@ public class SlotAllocator {
                     slotMap.put(id, slot);
                 }
             }
+        } catch (NumberFormatException e) {
+            System.out.println("Error parsing file: " + e.getMessage());
+            return false;
+        } catch (Exception e) {
+            System.out.println("Error reading file: " + e.getMessage());
+            return false;
         }
+        return true;
     }
 
     // Sắp xếp các mảng tăng dần theo khoảng cách
