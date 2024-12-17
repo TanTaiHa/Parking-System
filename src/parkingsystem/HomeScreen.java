@@ -251,9 +251,7 @@ public class HomeScreen extends JFrame {
     }
 
     private JPanel createHistoryPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new JLabel("History Panel (to be implemented)"), BorderLayout.CENTER);
-        return panel;
+        return new StatisticsPanel(parkedVehicles);
     }
 
     public static void main(String[] args) {
