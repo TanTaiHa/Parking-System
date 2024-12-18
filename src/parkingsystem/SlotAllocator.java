@@ -62,12 +62,12 @@ public class SlotAllocator {
         return -1;
     }
 
-    public long returnSlot(int id) {
+     public long returnSlot(int id) {
         Slot slot = slotMap.get(id);
         if (slot != null) {
-            slot.setAvailable(true);
 
             if (!slot.isAvailable()) {
+                slot.setAvailable(true);
                 return slot.getTime();
             } else {
                 System.out.println("Slot " + id + " is already available.");
