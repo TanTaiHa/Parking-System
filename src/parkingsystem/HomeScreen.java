@@ -183,8 +183,8 @@ public class HomeScreen extends JFrame {
                         vehicle.getName(),
                         vehicle.getVehicleNumber(),
                         vehicle.getMobile(),
-                        "Gate " + (vehicle.getGateIndex() + 1),
-                        vehicle.getAssignedSlotIndex() != 0 ? "Slot " + (vehicle.getAssignedSlotIndex() + 1)
+                        "Gate " + (vehicle.getGateIndex()),
+                        vehicle.getAssignedSlotIndex() != 0 ? "Slot " + (vehicle.getAssignedSlotIndex())
                                 : "Not Assigned",
                         vehicle.getEntryTime().toString()
                 });
