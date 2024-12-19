@@ -113,23 +113,33 @@ public class HomeScreen extends JFrame {
                 int slotIndex = allocator.getNearestAvailableSlot(gateIndex);
 
                 if (slotIndex != -1) {
+                    boolean vehicleExists = parkedVehicles.stream()
+                            .anyMatch(v -> v.getVehicleNumber().equalsIgnoreCase(vehicleNumber)); // Kiểm tra bằng biển
+                                                                                                  // số xe
 
-                    // Assign slot to vehicle
-                    vehicle.assignSlot(slotIndex);
-                    parkedVehicles.add(vehicle);
+                    if (!vehicleExists) {
+                        // Assign slot to vehicle
+                        vehicle.assignSlot(slotIndex);
+                        parkedVehicles.add(vehicle);
 
-                    // Update slot visualization
-                    slotLabels[slotIndex - 1].setBackground(Color.MAGENTA);
-                    slotLabels[slotIndex - 1].setText("<html>Slot " + slotIndex + "<br>" + vehicleNumber + "</html>");
+                        // Update slot visualization
+                        slotLabels[slotIndex - 1].setBackground(Color.MAGENTA);
+                        slotLabels[slotIndex - 1]
+                                .setText("<html>Slot " + slotIndex + "<br>" + vehicleNumber + "</html>");
 
-                    JOptionPane.showMessageDialog(this,
-                            "Vehicle added successfully to Slot " + slotIndex + "!",
-                            "Success", JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.showMessageDialog(this,
+                                "Vehicle added successfully to Slot " + slotIndex + "!",
+                                "Success", JOptionPane.INFORMATION_MESSAGE);
 
-                    // Clear input fields
-                    nameField.setText("");
-                    vehicleNumberField.setText("");
-                    mobileField.setText("");
+                        // Clear input fields
+                        nameField.setText("");
+                        vehicleNumberField.setText("");
+                        mobileField.setText("");
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                                "Vehicle with this number is already parked call 113.",
+                                "Emergency", JOptionPane.WARNING_MESSAGE);
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this,
                             "No available slots in any gate.",
