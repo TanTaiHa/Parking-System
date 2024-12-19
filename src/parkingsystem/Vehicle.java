@@ -1,52 +1,55 @@
 package parkingsystem;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 public class Vehicle {
-    // Static set to track unique vehicle numbers
+    private int id; // Thêm ID duy nhất
     private String name;
     private String vehicleNumber;
     private String mobile;
     private int gateIndex;
     private int assignedSlotIndex = -1; // Default to -1 to indicate no slot assigned
     private LocalDateTime entryTime;
+    private boolean takenVehicle; // Field to track if the vehicle is parked or not
 
-    public Vehicle(String name, String vehicleNumber, String mobile, int gateIndex) {
+    // Constructor đầy đủ
+    public Vehicle(int id, String name, String vehicleNumber, String mobile, int gateIndex) {
+        this.id = id;
+
         // Validate name
         if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Name must be fill in");
+            throw new IllegalArgumentException("Name must be filled in");
         }
 
-        // Validate vehicle number - check for uniqueness
+        // Validate vehicle number
         if (vehicleNumber == null || vehicleNumber.trim().isEmpty()) {
-            throw new IllegalArgumentException("Vehicle number must be fill in");
+            throw new IllegalArgumentException("Vehicle number must be filled in");
         }
 
-        // Mobile number validation
+        // Validate mobile number
         if (mobile == null || mobile.trim().isEmpty() || !mobile.matches("\\d+")) {
             throw new IllegalArgumentException("Phone number must contain only digits");
         }
 
         // Assign values
         this.name = name.trim();
-        this.vehicleNumber = vehicleNumber;
-        this.mobile = mobile != null ? mobile.trim() : "";
+        this.vehicleNumber = vehicleNumber.trim();
+        this.mobile = mobile.trim();
         this.gateIndex = gateIndex;
         this.entryTime = LocalDateTime.now();
-
+        this.takenVehicle = true; // Vehicle is parked by default
     }
 
-    // Method to assign a slot
-    public void assignSlot(int slotIndex) {
-        if (slotIndex < 0) {
-            throw new IllegalArgumentException("Slot index cannot be negative");
-        }
-        this.assignedSlotIndex = slotIndex;
+    // Getter và Setter cho ID
+    public int getId() {
+        return id;
     }
 
-    // Existing getters and setters
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    // Getter và Setter cho các thuộc tính khác
     public String getName() {
         return name;
     }
@@ -79,25 +82,44 @@ public class Vehicle {
         this.gateIndex = gateIndex;
     }
 
-    // New getter for assigned slot index
     public int getAssignedSlotIndex() {
         return assignedSlotIndex;
     }
 
-    // Getter for entry time
+    public void assignSlot(int slotIndex) {
+        if (slotIndex < 0) {
+            throw new IllegalArgumentException("Slot index cannot be negative");
+        }
+        this.assignedSlotIndex = slotIndex;
+    }
+
     public LocalDateTime getEntryTime() {
         return entryTime;
     }
+    public void setEntryTime(LocalDateTime entryTime) {
+        this.entryTime = entryTime;
+    }
 
+    public boolean isTakenVehicle() {
+        return takenVehicle;
+    }
+
+    public void setTakenVehicle(boolean takenVehicle) {
+        this.takenVehicle = takenVehicle;
+    }
+
+    // Override phương thức toString để dễ dàng debug
     @Override
     public String toString() {
         return "Vehicle{" +
-                "name='" + name + '\'' +
+                "id=" + id +
+                ", name='" + name + '\'' +
                 ", vehicleNumber='" + vehicleNumber + '\'' +
                 ", mobile='" + mobile + '\'' +
                 ", gateIndex=" + gateIndex +
                 ", assignedSlotIndex=" + assignedSlotIndex +
                 ", entryTime=" + entryTime +
+                ", takenVehicle=" + takenVehicle +
                 '}';
     }
 }

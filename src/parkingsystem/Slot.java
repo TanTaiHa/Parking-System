@@ -15,6 +15,10 @@ public class Slot {
           this.distanceToGate2 = distanceToGate2;
           this.distanceToGate3 = distanceToGate3;
      }
+     
+     public void addTime(long beginTime) {
+          this.beginTime = beginTime;
+     }
 
      public void setTime() {
           this.beginTime = System.currentTimeMillis();

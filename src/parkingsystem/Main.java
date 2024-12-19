@@ -6,11 +6,7 @@ import java.io.File;
 public class Main {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // Delete config.json at startup to reset the application each time
             File configFile = new File("config.json");
-            if (configFile.exists()) {
-                configFile.delete();
-            }
             
             JFrame splashScreen = new JFrame();
             splashScreen.setUndecorated(true);
@@ -20,7 +16,15 @@ public class Main {
 
             Timer timer = new Timer(3000, e -> {
                 splashScreen.dispose();
-                new SetupWindow().setVisible(true); // Always show SetupWindow first
+
+                // Kiểm tra config.json
+                if (configFile.exists()) {
+                    // Nếu file config.json tồn tại, chuyển đến HomeScreen
+                    new HomeScreen().setVisible(true);
+                } else {
+                    // Nếu file config.json không tồn tại, chuyển đến SetupWindow
+                    new SetupWindow().setVisible(true);
+                }
             });
             timer.setRepeats(false);
             timer.start();

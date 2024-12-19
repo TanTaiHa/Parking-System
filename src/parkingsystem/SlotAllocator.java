@@ -111,6 +111,18 @@ public class SlotAllocator {
         sortSlotsByGate2();
         sortSlotsByGate3();
     }
+    
+    public boolean getSlotID(int slotIndex, long time) {
+        Slot slot = slotMap.get(slotIndex);
+
+        if (slot == null) {
+            return false;
+        } else {
+            slot.setAvailable(false);
+            slot.addTime(time);
+            return true;
+        }
+    }
 
     private void sortSlotsByGate1() {
         slotsByGate1.sort(Comparator.comparingInt(Slot::getDistanceToGate1));
