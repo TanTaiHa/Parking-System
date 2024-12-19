@@ -5,13 +5,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class Vehicle {
-     // Static set to track unique vehicle numbers
-    private static Set<String> registeredVehicleNumbers = new HashSet<>();
+    // Static set to track unique vehicle numbers
     private String name;
     private String vehicleNumber;
     private String mobile;
     private int gateIndex;
-    private int assignedSlotIndex = -1;  // Default to -1 to indicate no slot assigned
+    private int assignedSlotIndex = -1; // Default to -1 to indicate no slot assigned
     private LocalDateTime entryTime;
 
     public Vehicle(String name, String vehicleNumber, String mobile, int gateIndex) {
@@ -24,12 +23,6 @@ public class Vehicle {
         if (vehicleNumber == null || vehicleNumber.trim().isEmpty()) {
             throw new IllegalArgumentException("Vehicle number must be fill in");
         }
-        
-        // Check if vehicle number is already registered
-        String formattedVehicleNumber = vehicleNumber.trim().toUpperCase();
-        if (registeredVehicleNumbers.contains(formattedVehicleNumber)) {
-            throw new IllegalArgumentException("The vehicle number has already been assigned!");
-        }
 
         // Mobile number validation
         if (mobile == null || mobile.trim().isEmpty() || !mobile.matches("\\d+")) {
@@ -38,18 +31,11 @@ public class Vehicle {
 
         // Assign values
         this.name = name.trim();
-        this.vehicleNumber = formattedVehicleNumber;
+        this.vehicleNumber = vehicleNumber;
         this.mobile = mobile != null ? mobile.trim() : "";
         this.gateIndex = gateIndex;
         this.entryTime = LocalDateTime.now();
 
-        // Add vehicle number to registered set
-        registeredVehicleNumbers.add(formattedVehicleNumber);
-    }
-
-    // remove vehicle number when it gone my bae (optional)
-    public void removeVehicleNumber() {
-        registeredVehicleNumbers.remove(this.vehicleNumber);
     }
 
     // Method to assign a slot
