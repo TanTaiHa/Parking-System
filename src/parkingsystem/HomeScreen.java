@@ -18,66 +18,66 @@ public class HomeScreen extends JFrame {
     SlotAllocator allocator = null;
 
     public HomeScreen() {
-    setTitle("Parking Management System");
-    setSize(1000, 700);
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setTitle("Parking Management System");
+        setSize(1000, 700);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-    // Initialize CardLayout and card panel BEFORE using it
-    cardLayout = new CardLayout();
-    cardPanel = new JPanel(cardLayout);
+        // Initialize CardLayout and card panel BEFORE using it
+        cardLayout = new CardLayout();
+        cardPanel = new JPanel(cardLayout);
 
-    // Side menu setup
-    JPanel sideMenuPanel = new JPanel();
-    sideMenuPanel.setLayout(new BoxLayout(sideMenuPanel, BoxLayout.Y_AXIS));
+        // Side menu setup
+        JPanel sideMenuPanel = new JPanel();
+        sideMenuPanel.setLayout(new BoxLayout(sideMenuPanel, BoxLayout.Y_AXIS));
 
-    // Create panels AFTER cardPanel is initialized
-    JPanel homePanel = createHomePanel();
-    JPanel addVehiclePanel = createAddVehiclePanel();
-    JPanel manageVehiclePanel = createManageVehiclePanel();
-    JPanel historyPanel = createHistoryPanel();
-    JPanel returnSlotPanel = createReturnSlotPanel();
+        // Create panels AFTER cardPanel is initialized
+        JPanel homePanel = createHomePanel();
+        JPanel addVehiclePanel = createAddVehiclePanel();
+        JPanel manageVehiclePanel = createManageVehiclePanel();
+        JPanel historyPanel = createHistoryPanel();
+        JPanel returnSlotPanel = createReturnSlotPanel();
 
-    // Add panels to cardPanel
-    cardPanel.add(homePanel, "Home");
-    cardPanel.add(addVehiclePanel, "AddVehicle");
-    cardPanel.add(manageVehiclePanel, "ManageVehicle");
-    cardPanel.add(historyPanel, "History");
-    cardPanel.add(returnSlotPanel, "ReturnSlot");
+        // Add panels to cardPanel
+        cardPanel.add(homePanel, "Home");
+        cardPanel.add(addVehiclePanel, "AddVehicle");
+        cardPanel.add(manageVehiclePanel, "ManageVehicle");
+        cardPanel.add(historyPanel, "History");
+        cardPanel.add(returnSlotPanel, "ReturnSlot");
 
-    // Create and add buttons
-    JButton btnHome = new JButton("Home");
-    JButton btnAddVehicle = new JButton("Add Vehicle");
-    JButton btnManageVehicle = new JButton("Manage Vehicle");
-    JButton btnHistory = new JButton("History");
-    JButton btnReturnSlot = new JButton("Return Slot");
+        // Create and add buttons
+        JButton btnHome = new JButton("Home");
+        JButton btnAddVehicle = new JButton("Add Vehicle");
+        JButton btnManageVehicle = new JButton("Manage Vehicle");
+        JButton btnHistory = new JButton("History");
+        JButton btnReturnSlot = new JButton("Return Slot");
 
-    btnHome.addActionListener(e -> cardLayout.show(cardPanel, "Home"));
-    btnAddVehicle.addActionListener(e -> cardLayout.show(cardPanel, "AddVehicle"));
-    btnManageVehicle.addActionListener(e -> cardLayout.show(cardPanel, "ManageVehicle"));
-    btnHistory.addActionListener(e -> cardLayout.show(cardPanel, "History"));
-    btnReturnSlot.addActionListener(e -> cardLayout.show(cardPanel, "ReturnSlot"));
+        btnHome.addActionListener(e -> cardLayout.show(cardPanel, "Home"));
+        btnAddVehicle.addActionListener(e -> cardLayout.show(cardPanel, "AddVehicle"));
+        btnManageVehicle.addActionListener(e -> cardLayout.show(cardPanel, "ManageVehicle"));
+        btnHistory.addActionListener(e -> cardLayout.show(cardPanel, "History"));
+        btnReturnSlot.addActionListener(e -> cardLayout.show(cardPanel, "ReturnSlot"));
 
-    // Add buttons to side menu
-    sideMenuPanel.add(btnHome);
-    sideMenuPanel.add(btnAddVehicle);
-    sideMenuPanel.add(btnManageVehicle);
-    sideMenuPanel.add(btnHistory);
-    sideMenuPanel.add(btnReturnSlot);
+        // Add buttons to side menu
+        sideMenuPanel.add(btnHome);
+        sideMenuPanel.add(btnAddVehicle);
+        sideMenuPanel.add(btnManageVehicle);
+        sideMenuPanel.add(btnHistory);
+        sideMenuPanel.add(btnReturnSlot);
 
-    // Set layout and add components
-    setLayout(new BorderLayout());
-    add(sideMenuPanel, BorderLayout.WEST);
-    add(cardPanel, BorderLayout.CENTER);
+        // Set layout and add components
+        setLayout(new BorderLayout());
+        add(sideMenuPanel, BorderLayout.WEST);
+        add(cardPanel, BorderLayout.CENTER);
 
-    setVisible(true);
+        setVisible(true);
 
-    try {
-        allocator = new SlotAllocator("src/parkingsystem/slot.txt");
-        System.out.println("File loaded successfully!");
-    } catch (IOException ioException) {
-        System.out.println("Error reading file: " + ioException.getMessage());
-        System.out.println("Please try again.");
-    }
+        try {
+            allocator = new SlotAllocator("src/parkingsystem/slot.txt");
+            System.out.println("File loaded successfully!");
+        } catch (IOException ioException) {
+            System.out.println("Error reading file: " + ioException.getMessage());
+            System.out.println("Please try again.");
+        }
     }
 
     private JPanel createAddVehiclePanel() {
@@ -115,25 +115,35 @@ public class HomeScreen extends JFrame {
                 int slotIndex = allocator.getNearestAvailableSlot(gateIndex);
 
                 if (slotIndex != -1) {
-                    // Assign slot to vehicle
-                    vehicle.assignSlot(slotIndex);
-                    parkedVehicles.add(vehicle);
-                    
-                    //Add to DB
-                    DBOperation.saveVehicleEntry(vehicle);
+                    boolean vehicleExists = parkedVehicles.stream()
+                            .anyMatch(v -> v.getVehicleNumber().equalsIgnoreCase(vehicleNumber)); // Kiểm tra bằng biển
+                                                                                                  // số xe
+                    if (!vehicleExists) {
+                        // Assign slot to vehicle
+                        vehicle.assignSlot(slotIndex);
+                        parkedVehicles.add(vehicle);
 
-                    // Update slot visualization
-                    slotLabels[slotIndex - 1].setBackground(Color.MAGENTA);
-                    slotLabels[slotIndex - 1].setText("<html>Slot " + slotIndex + "<br>" + vehicleNumber + "</html>");
+                        // Add to DB
+                        DBOperation.saveVehicleEntry(vehicle);
 
-                    JOptionPane.showMessageDialog(this,
-                            "Vehicle added successfully to Slot " + slotIndex + "!",
-                            "Success", JOptionPane.INFORMATION_MESSAGE);
+                        // Update slot visualization
+                        slotLabels[slotIndex - 1].setBackground(Color.MAGENTA);
+                        slotLabels[slotIndex - 1]
+                                .setText("<html>Slot " + slotIndex + "<br>" + vehicleNumber + "</html>");
 
-                    // Clear input fields
-                    nameField.setText("");
-                    vehicleNumberField.setText("");
-                    mobileField.setText("");
+                        JOptionPane.showMessageDialog(this,
+                                "Vehicle added successfully to Slot " + slotIndex + "!",
+                                "Success", JOptionPane.INFORMATION_MESSAGE);
+
+                        // Clear input fields
+                        nameField.setText("");
+                        vehicleNumberField.setText("");
+                        mobileField.setText("");
+                    } else {
+                        JOptionPane.showMessageDialog(this,
+                                "Vehicle with this number is already parked call 113.",
+                                "Emergency", JOptionPane.WARNING_MESSAGE);
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this,
                             "No available slots in any gate.",
@@ -148,87 +158,90 @@ public class HomeScreen extends JFrame {
 
         return panel;
     }
-    
+
     private JPanel createReturnSlotPanel() {
-    JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
-    panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-    JTextField vehicleNumberField = new JTextField();
-    JButton returnSlotButton = new JButton("Return Vehicle");
-    JTextArea resultArea = new JTextArea();
-    resultArea.setEditable(false);
-    resultArea.setLineWrap(true);
-    resultArea.setWrapStyleWord(true);
+        JTextField vehicleNumberField = new JTextField();
+        JButton returnSlotButton = new JButton("Return Vehicle");
+        JTextArea resultArea = new JTextArea();
+        resultArea.setEditable(false);
+        resultArea.setLineWrap(true);
+        resultArea.setWrapStyleWord(true);
 
-    panel.add(new JLabel("Vehicle Number:"));
-    panel.add(vehicleNumberField);
-    panel.add(new JLabel(" "));
-    panel.add(returnSlotButton);
-    panel.add(new JLabel("Result:"));
-    panel.add(new JScrollPane(resultArea));
+        panel.add(new JLabel("Vehicle Number:"));
+        panel.add(vehicleNumberField);
+        panel.add(new JLabel(" "));
+        panel.add(returnSlotButton);
+        panel.add(new JLabel("Result:"));
+        panel.add(new JScrollPane(resultArea));
 
-    returnSlotButton.addActionListener(e -> {
-        String vehicleNumber = vehicleNumberField.getText().trim();
+        returnSlotButton.addActionListener(e -> {
+            String vehicleNumber = vehicleNumberField.getText().trim();
 
-        if (vehicleNumber.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a vehicle number.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Find and remove the vehicle
-        Vehicle vehicleToReturn = parkedVehicles.stream()
-                .filter(v -> v.getVehicleNumber().equalsIgnoreCase(vehicleNumber))
-                .findFirst()
-                .orElse(null);
-
-        if (vehicleToReturn == null) {
-            JOptionPane.showMessageDialog(this, "No vehicle found with this number.", "Not Found", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        // Get the slot number
-        int slotNumber = vehicleToReturn.getAssignedSlotIndex();
-
-        if (slotNumber == 0) {
-            JOptionPane.showMessageDialog(this, "Vehicle has no assigned slot.", "Error", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Return the slot and get parking duration
-        long parkingDuration = allocator.returnSlot(slotNumber);
-
-        if (parkingDuration != -1) {
-            
-            //Add to DB
-            DBOperation.updateVehicleExit(vehicleNumber, parkingDuration);
-            // Update slot visualization
-            if (slotNumber >= 1 && slotNumber <= 36) {
-                slotLabels[slotNumber - 1].setBackground(Color.LIGHT_GRAY);
-                slotLabels[slotNumber - 1].setText("Slot " + slotNumber);
+            if (vehicleNumber.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Please enter a vehicle number.", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
             }
 
-            // Remove vehicle from parked list
-            parkedVehicles.remove(vehicleToReturn);
+            // Find and remove the vehicle
+            Vehicle vehicleToReturn = parkedVehicles.stream()
+                    .filter(v -> v.getVehicleNumber().equalsIgnoreCase(vehicleNumber))
+                    .findFirst()
+                    .orElse(null);
 
-            // Refresh Manage Vehicle panel
-            refreshManageVehiclePanel();
+            if (vehicleToReturn == null) {
+                JOptionPane.showMessageDialog(this, "No vehicle found with this number.", "Not Found",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
 
-            resultArea.setText("Vehicle returned successfully!\n" +
-                    "Vehicle Number: " + vehicleNumber + "\n" +
-                    "Slot Number: " + slotNumber + "\n" +
-                    "Parking Duration: " + parkingDuration + " seconds");
+            // Get the slot number
+            int slotNumber = vehicleToReturn.getAssignedSlotIndex();
 
-            // Clear input field
-            vehicleNumberField.setText("");
-        } else {
-            resultArea.setText("Failed to return vehicle. The slot might already be available.");
-        }
-    });
+            if (slotNumber == 0) {
+                JOptionPane.showMessageDialog(this, "Vehicle has no assigned slot.", "Error",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-    return panel;
+            // Return the slot and get parking duration
+            long parkingDuration = allocator.returnSlot(slotNumber);
+
+            if (parkingDuration != -1) {
+
+                // Add to DB
+                DBOperation.updateVehicleExit(vehicleNumber, parkingDuration);
+                // Update slot visualization
+                if (slotNumber >= 1 && slotNumber <= 36) {
+                    slotLabels[slotNumber - 1].setBackground(Color.LIGHT_GRAY);
+                    slotLabels[slotNumber - 1].setText("Slot " + slotNumber);
+                }
+
+                // Remove vehicle from parked list
+                parkedVehicles.remove(vehicleToReturn);
+
+                // Refresh Manage Vehicle panel
+                refreshManageVehiclePanel();
+
+                resultArea.setText("Vehicle returned successfully!\n" +
+                        "Vehicle Number: " + vehicleNumber + "\n" +
+                        "Slot Number: " + slotNumber + "\n" +
+                        "Parking Duration: " + parkingDuration + " seconds");
+
+                // Clear input field
+                vehicleNumberField.setText("");
+            } else {
+                resultArea.setText("Failed to return vehicle. The slot might already be available.");
+            }
+        });
+
+        return panel;
     }
- 
-    //method to refresh Manage Vehicle panel
+
+    // method to refresh Manage Vehicle panel
     private void refreshManageVehiclePanel() {
         // Find the Manage Vehicle panel in the card layout
         for (Component comp : cardPanel.getComponents()) {
@@ -252,13 +265,14 @@ public class HomeScreen extends JFrame {
                                 // Repopulate with current parked vehicles
                                 for (Vehicle vehicle : parkedVehicles) {
                                     model.addRow(new Object[] {
-                                        vehicle.getName(),
-                                        vehicle.getVehicleNumber(),
-                                        vehicle.getMobile(),
-                                        "Gate " + (vehicle.getGateIndex()),
-                                        vehicle.getAssignedSlotIndex() != 0 ? "Slot " + (vehicle.getAssignedSlotIndex())
-                                                : "Not Assigned",
-                                        vehicle.getEntryTime().toString()
+                                            vehicle.getName(),
+                                            vehicle.getVehicleNumber(),
+                                            vehicle.getMobile(),
+                                            "Gate " + (vehicle.getGateIndex()),
+                                            vehicle.getAssignedSlotIndex() != 0
+                                                    ? "Slot " + (vehicle.getAssignedSlotIndex())
+                                                    : "Not Assigned",
+                                            vehicle.getEntryTime().toString()
                                     });
                                 }
 
@@ -385,7 +399,7 @@ public class HomeScreen extends JFrame {
         return gateLabel;
     }
 
-        private JPanel createHistoryPanel() {
+    private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
 
         // Search components
@@ -397,7 +411,8 @@ public class HomeScreen extends JFrame {
         searchPanel.add(searchButton);
 
         // Table for history
-        String[] columns = {"Name", "Vehicle Number", "Mobile", "Gate", "Slot", "Entry Time", "Exit Time", "Duration (s)"};
+        String[] columns = { "Name", "Vehicle Number", "Mobile", "Gate", "Slot", "Entry Time", "Exit Time",
+                "Duration (s)" };
         DefaultTableModel model = new DefaultTableModel(columns, 0);
         JTable historyTable = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(historyTable);
@@ -419,28 +434,28 @@ public class HomeScreen extends JFrame {
 
     private void loadParkingRecords(DefaultTableModel model, String vehicleNumber) {
         model.setRowCount(0);
-        try (ResultSet rs = vehicleNumber == null || vehicleNumber.isEmpty() 
-                ? DBOperation.getAllParkingRecords() 
+        try (ResultSet rs = vehicleNumber == null || vehicleNumber.isEmpty()
+                ? DBOperation.getAllParkingRecords()
                 : DBOperation.getVehicleHistory(vehicleNumber)) {
 
             while (rs != null && rs.next()) {
-                model.addRow(new Object[]{
-                    rs.getString("name"),
-                    rs.getString("vehicle_number"),
-                    rs.getString("mobile"),
-                    "Gate " + rs.getInt("gate_number"),
-                    "Slot " + rs.getInt("slot_number"),
-                    rs.getTimestamp("entry_time"),
-                    rs.getTimestamp("exit_time"),
-                    rs.getLong("duration_seconds")
+                model.addRow(new Object[] {
+                        rs.getString("name"),
+                        rs.getString("vehicle_number"),
+                        rs.getString("mobile"),
+                        "Gate " + rs.getInt("gate_number"),
+                        "Slot " + rs.getInt("slot_number"),
+                        rs.getTimestamp("entry_time"),
+                        rs.getTimestamp("exit_time"),
+                        rs.getLong("duration_seconds")
                 });
             }
         } catch (SQLException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this,
-                "Error loading parking records: " + e.getMessage(),
-                "Database Error",
-                JOptionPane.ERROR_MESSAGE);
+                    "Error loading parking records: " + e.getMessage(),
+                    "Database Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
