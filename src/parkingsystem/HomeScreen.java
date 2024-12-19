@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class HomeScreen extends JFrame {
     private CardLayout cardLayout;
@@ -116,6 +118,9 @@ public class HomeScreen extends JFrame {
                     // Assign slot to vehicle
                     vehicle.assignSlot(slotIndex);
                     parkedVehicles.add(vehicle);
+                    
+                    //Add to DB
+                    DBOperation.saveVehicleEntry(vehicle);
 
                     // Update slot visualization
                     slotLabels[slotIndex - 1].setBackground(Color.MAGENTA);
@@ -193,6 +198,9 @@ public class HomeScreen extends JFrame {
         long parkingDuration = allocator.returnSlot(slotNumber);
 
         if (parkingDuration != -1) {
+            
+            //Add to DB
+            DBOperation.updateVehicleExit(vehicleNumber, parkingDuration);
             // Update slot visualization
             if (slotNumber >= 1 && slotNumber <= 36) {
                 slotLabels[slotNumber - 1].setBackground(Color.LIGHT_GRAY);
@@ -220,8 +228,6 @@ public class HomeScreen extends JFrame {
     return panel;
     }
  
-
-
     //method to refresh Manage Vehicle panel
     private void refreshManageVehiclePanel() {
         // Find the Manage Vehicle panel in the card layout
@@ -379,10 +385,63 @@ public class HomeScreen extends JFrame {
         return gateLabel;
     }
 
-    private JPanel createHistoryPanel() {
+        private JPanel createHistoryPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        panel.add(new JLabel("History Panel (to be implemented)"), BorderLayout.CENTER);
+
+        // Search components
+        JPanel searchPanel = new JPanel(new FlowLayout());
+        JTextField searchField = new JTextField(20);
+        JButton searchButton = new JButton("Search");
+        searchPanel.add(new JLabel("Vehicle Number:"));
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+
+        // Table for history
+        String[] columns = {"Name", "Vehicle Number", "Mobile", "Gate", "Slot", "Entry Time", "Exit Time", "Duration (s)"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        JTable historyTable = new JTable(model);
+        JScrollPane scrollPane = new JScrollPane(historyTable);
+
+        panel.add(searchPanel, BorderLayout.NORTH);
+        panel.add(scrollPane, BorderLayout.CENTER);
+
+        // Load all records initially
+        loadParkingRecords(model, null);
+
+        // Search button action
+        searchButton.addActionListener(e -> {
+            String searchTerm = searchField.getText().trim();
+            loadParkingRecords(model, searchTerm);
+        });
+
         return panel;
+    }
+
+    private void loadParkingRecords(DefaultTableModel model, String vehicleNumber) {
+        model.setRowCount(0);
+        try (ResultSet rs = vehicleNumber == null || vehicleNumber.isEmpty() 
+                ? DBOperation.getAllParkingRecords() 
+                : DBOperation.getVehicleHistory(vehicleNumber)) {
+
+            while (rs != null && rs.next()) {
+                model.addRow(new Object[]{
+                    rs.getString("name"),
+                    rs.getString("vehicle_number"),
+                    rs.getString("mobile"),
+                    "Gate " + rs.getInt("gate_number"),
+                    "Slot " + rs.getInt("slot_number"),
+                    rs.getTimestamp("entry_time"),
+                    rs.getTimestamp("exit_time"),
+                    rs.getLong("duration_seconds")
+                });
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                "Error loading parking records: " + e.getMessage(),
+                "Database Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public static void main(String[] args) {

@@ -63,14 +63,14 @@ public class SetupWindow extends JFrame {
                 }
 
                 // Reset the database with the provided configuration
-                new DBOperation().resetDatabase(
-                    adminUsernameField.getText(),
-                    adminPasswordField.getText(),
-                    36 // Fixed number of parking slots
-                );
+//                new DBOperation().resetDatabase(
+//                    adminUsernameField.getText(),
+//                    adminPasswordField.getText(),
+//                    36 // Fixed number of parking slots
+//                );
 
                 // Open the LoginScreen
-                new LoginScreen().setVisible(true);
+//                new LoginScreen().setVisible(true);
                 dispose();
 
             } catch (IOException ioException) {

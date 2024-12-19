@@ -1,54 +1,112 @@
 package parkingsystem;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.Statement;
+import java.sql.*;
+import java.time.LocalDateTime;
 
 public class DBOperation {
     private static final String URL = "jdbc:mysql://localhost:3306/vehicle_parking";
     private static final String USER = "root";
     private static final String PASSWORD = "hiimtantaI010103";
 
-    private Connection connect() throws Exception {
+    // Initialize database and create table if not exists
+    static {
+        try (Connection conn = getConnection();
+             Statement stmt = conn.createStatement()) {
+            
+            String createTableSQL = """
+                CREATE TABLE IF NOT EXISTS parking_records (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(100),
+                    vehicle_number VARCHAR(20),
+                    mobile VARCHAR(15),
+                    gate_number INT,
+                    slot_number INT,
+                    entry_time TIMESTAMP,
+                    exit_time TIMESTAMP NULL,
+                    duration_seconds BIGINT NULL
+                )
+            """;
+            stmt.execute(createTableSQL);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
     }
 
-    public boolean adminLogin(String username, String password) {
-        try (Connection conn = connect()) {
-            String query = "SELECT * FROM admin WHERE username = ? AND password = ?";
-            PreparedStatement stmt = conn.prepareStatement(query);
-            stmt.setString(1, username);
-            stmt.setString(2, password);
-            return stmt.executeQuery().next();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
+    public static void saveVehicleEntry(Vehicle vehicle) {
+        String sql = """
+            INSERT INTO parking_records 
+            (name, vehicle_number, mobile, gate_number, slot_number, entry_time)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """;
 
-    public void resetDatabase(String adminUsername, String adminPassword, int totalSpaces) {
-        try (Connection conn = connect(); Statement stmt = conn.createStatement()) {
-            // Drop existing tables
-            stmt.execute("DROP TABLE IF EXISTS admin");
-            stmt.execute("DROP TABLE IF EXISTS parking_space");
-
-            // Recreate admin table and insert initial admin
-            stmt.execute("CREATE TABLE admin (username VARCHAR(255), password VARCHAR(255))");
-            PreparedStatement adminStmt = conn.prepareStatement("INSERT INTO admin (username, password) VALUES (?, ?)");
-            adminStmt.setString(1, adminUsername);
-            adminStmt.setString(2, adminPassword);
-            adminStmt.executeUpdate();
-
-            // Create parking_space table without type column
-            stmt.execute("CREATE TABLE parking_space (available_spaces INT)");
-            PreparedStatement spaceStmt = conn
-                    .prepareStatement("INSERT INTO parking_space (available_spaces) VALUES (?)");
-            spaceStmt.setInt(1, totalSpaces);
-            spaceStmt.executeUpdate();
-        } catch (Exception e) {
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, vehicle.getName());
+            pstmt.setString(2, vehicle.getVehicleNumber());
+            pstmt.setString(3, vehicle.getMobile());
+            pstmt.setInt(4, vehicle.getGateIndex());
+            pstmt.setInt(5, vehicle.getAssignedSlotIndex());
+            pstmt.setTimestamp(6, Timestamp.valueOf(vehicle.getEntryTime()));
+            
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    public static void updateVehicleExit(String vehicleNumber, long durationSeconds) {
+        String sql = """
+            UPDATE parking_records 
+            SET exit_time = ?, duration_seconds = ?
+            WHERE vehicle_number = ? AND exit_time IS NULL
+        """;
+
+        try (Connection conn = getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setTimestamp(1, Timestamp.valueOf(LocalDateTime.now()));
+            pstmt.setLong(2, durationSeconds);
+            pstmt.setString(3, vehicleNumber);
+            
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static ResultSet getVehicleHistory(String vehicleNumber) {
+        String sql = """
+            SELECT * FROM parking_records 
+            WHERE vehicle_number LIKE ? 
+            ORDER BY entry_time DESC
+        """;
+
+        try {
+            Connection conn = getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, "%" + vehicleNumber + "%");
+            return pstmt.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static ResultSet getAllParkingRecords() {
+        String sql = "SELECT * FROM parking_records ORDER BY entry_time DESC";
+
+        try {
+            Connection conn = getConnection();
+            Statement stmt = conn.createStatement();
+            return stmt.executeQuery(sql);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
 }
