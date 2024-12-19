@@ -22,14 +22,8 @@ public class SlotAllocator {
         sortSlots();
     }
 
+    //need to do this
     public void UpdateSlotValue(String fileName) throws IOException {
-        slotsByGate1.clear();
-        slotsByGate2.clear();
-        slotsByGate3.clear();
-        slotMap.clear();
-
-        loadSlotsFromFile(fileName);
-        sortSlots();
     }
 
     public int getNearestAvailableSlot(int gateIndex) {
@@ -62,7 +56,7 @@ public class SlotAllocator {
         return -1;
     }
 
-     public long returnSlot(int id) {
+    public long returnSlot(int id) {
         Slot slot = slotMap.get(id);
         if (slot != null) {
 
@@ -113,8 +107,20 @@ public class SlotAllocator {
 
     // Sắp xếp các mảng tăng dần theo khoảng cách
     private void sortSlots() {
+        sortSlotsByGate1();
+        sortSlotsByGate2();
+        sortSlotsByGate3();
+    }
+
+    private void sortSlotsByGate1() {
         slotsByGate1.sort(Comparator.comparingInt(Slot::getDistanceToGate1));
+    }
+
+    private void sortSlotsByGate2() {
         slotsByGate2.sort(Comparator.comparingInt(Slot::getDistanceToGate2));
+    }
+
+    private void sortSlotsByGate3() {
         slotsByGate3.sort(Comparator.comparingInt(Slot::getDistanceToGate3));
     }
 
@@ -133,5 +139,35 @@ public class SlotAllocator {
 
     public HashMap<Integer, Slot> getSlotMap() {
         return slotMap;
+    }
+
+    public boolean setDistanceToGate1(int id, int distance) {
+        Slot slot = slotMap.get(id);
+        if (slot != null) {
+            slot.setDistanceToGate1(distance);
+            sortSlotsByGate1();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setDistanceToGate2(int id, int distance) {
+        Slot slot = slotMap.get(id);
+        if (slot != null) {
+            slot.setDistanceToGate2(distance);
+            sortSlotsByGate2();
+            return true;
+        }
+        return false;
+    }
+
+    public boolean setDistanceToGate3(int id, int distance) {
+        Slot slot = slotMap.get(id);
+        if (slot != null) {
+            slot.setDistanceToGate3(distance);
+            sortSlotsByGate3();
+            return true;
+        }
+        return false;
     }
 }
